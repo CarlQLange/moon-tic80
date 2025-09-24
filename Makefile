@@ -39,18 +39,37 @@ compile:
 		exit 1; \
 	fi
 	@echo "Compiling LiveScript files..."
+	# Compile level files first
+	@if [ -d "levels" ]; then \
+		for level in levels/*.ls; do \
+			if [ -f "$$level" ]; then \
+				$(LSC) --compile --bare --no-header "$$level"; \
+			fi \
+		done \
+	fi
+	# Compile main game file
 	$(LSC) --compile --bare --no-header --output . $(MAIN_LS)
+	# Create final concatenated JS file
 	@echo "// title:   Moon" > $(COMPILED_JS).tmp
 	@echo "// author:  Carl Lange" >> $(COMPILED_JS).tmp
-	@echo "// desc:    A space adventure on the moon" >> $(COMPILED_JS).tmp
+	@echo "// desc:    Control the moon to manipulate tides in puzzle levels" >> $(COMPILED_JS).tmp
 	@echo "// site:" >> $(COMPILED_JS).tmp
 	@echo "// license: MIT License" >> $(COMPILED_JS).tmp
 	@echo "// version: 0.1" >> $(COMPILED_JS).tmp
 	@echo "// script:  js" >> $(COMPILED_JS).tmp
 	@echo "" >> $(COMPILED_JS).tmp
+	# Concatenate level files first, then main game
+	@if [ -d "levels" ]; then \
+		for level in levels/*.js; do \
+			if [ -f "$$level" ]; then \
+				cat "$$level" >> $(COMPILED_JS).tmp; \
+				echo "" >> $(COMPILED_JS).tmp; \
+			fi \
+		done \
+	fi
 	@cat $(PROJECT_NAME).js >> $(COMPILED_JS).tmp
 	@mv $(COMPILED_JS).tmp $(COMPILED_JS)
-	@echo "Compiled to $(COMPILED_JS)"
+	@echo "Compiled to $(COMPILED_JS) (with levels)"
 
 # Development with file watching
 dev: compile
@@ -60,14 +79,14 @@ dev: compile
 		echo "  brew install entr"; \
 		exit 1; \
 	fi
-	@echo "Watching src/ for changes. Press Ctrl+C to stop."
+	@echo "Watching src/ and levels/ for changes. Press Ctrl+C to stop."
 	@if command -v fswatch >/dev/null 2>&1; then \
-		fswatch -o src/ | while read; do \
+		fswatch -o src/ levels/ | while read; do \
 			echo "LiveScript files changed, recompiling..."; \
 			make compile && $(TIC80) $(TIC80_FLAGS) --cmd "new js & import code $(COMPILED_JS) & run"; \
 		done; \
 	else \
-		find src -name "*.ls" | entr -r sh -c 'make compile && $(TIC80) $(TIC80_FLAGS) --cmd "new js & import code $(COMPILED_JS) & run"'; \
+		find src levels -name "*.ls" 2>/dev/null | entr -r sh -c 'make compile && $(TIC80) $(TIC80_FLAGS) --cmd "new js & import code $(COMPILED_JS) & run"'; \
 	fi
 
 # Single run
@@ -93,4 +112,6 @@ clean:
 	@rm -f *.wasm
 	@rm -f *.zip
 	@rm -f cart.tic
+	@rm -f test-*.js
+	@if [ -d "levels" ]; then rm -f levels/*.js; fi
 	@echo "Clean complete"
