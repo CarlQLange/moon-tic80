@@ -1,0 +1,36 @@
+# TIC-80 generated files
+*.tic
+*.html
+*.js
+*.wasm
+*.zip
+cart.tic
+
+# TIC-80 local data directory
+.local/
+
+# LiveScript compiled files
+combined.js
+src/combined.ls
+
+# Temporary files
+.DS_Store
+*~
+*.swp
+*.swo
+
+# Node.js (if using npm for LiveScript tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
